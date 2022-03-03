@@ -11,16 +11,18 @@ using namespace std;
 #include "Blocks.h"
 
 // mounts the file system
-void FileSys::mount(int sock) {
-  bfs.mount();
-  curr_dir = 1; //by default current directory is home directory, in disk block #1
-  fs_sock = sock; //use this socket to receive file system operations from the client and send back response messages
+void FileSys::mount(int sock)
+{
+    bfs.mount();
+    curr_dir = 1;   // by default current directory is home directory, in disk block #1
+    fs_sock = sock; // use this socket to receive file system operations from the client and send back response messages
 }
 
 // unmounts the file system
-void FileSys::unmount() {
-  bfs.unmount();
-  close(fs_sock);
+void FileSys::unmount()
+{
+    bfs.unmount();
+    close(fs_sock);
 }
 
 // make a directory
@@ -34,7 +36,8 @@ void FileSys::cd(const char *name)
 }
 
 // switch to home directory
-void FileSys::home() {
+void FileSys::home()
+{
 }
 
 // remove a directory
@@ -78,4 +81,3 @@ void FileSys::stat(const char *name)
 }
 
 // HELPER FUNCTIONS (optional)
-

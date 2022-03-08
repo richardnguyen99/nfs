@@ -11,19 +11,17 @@
 #include <netdb.h>
 
 // Shell
-class Shell
-{
+class Shell {
 
-public:
-    // constructor, do not change it!!
-    Shell() : cs_sock(-1), is_mounted(false)
-    {
+  public:
+    //constructor, do not change it!!
+    Shell() : cs_sock(-1), is_mounted(false) {   
     }
 
     // Mount a network file system located in host:port, set is_mounted = true if success
-    void mountNFS(string fs_loc); // fs_loc must be in the format of server:port
+    void mountNFS(string fs_loc);  //fs_loc must be in the format of server:port
 
-    // unmount the mounted network file syste,
+    //unmount the mounted network file syste,
     void unmountNFS();
 
     // Executes the shell until the user quits.
@@ -32,17 +30,19 @@ public:
     // Execute a script.
     void run_script(char *file_name);
 
-private:
-    int cs_sock; // socket to the network file system server
+  private:
+    
+    int cs_sock; //socket to the network file system server
 
-    bool is_mounted; // true if the network file system is mounted, false otherise
+
+    bool is_mounted; //true if the network file system is mounted, false otherise
 
     // data structure for command line
     struct Command
     {
-        string name;        // name of command
-        string file_name;   // name of file
-        string append_data; // append data (append only)
+      string name;		// name of command
+      string file_name;		// name of file
+      string append_data;	// append data (append only)
     };
 
     // Executes the command. Returns true for quit and false otherwise.
@@ -52,7 +52,7 @@ private:
     // for invalid command lines.
     struct Command parse_command(string command_str);
 
-    // Remote procedure call on mkdir
+    // Remote procedure call on mkdir 
     void mkdir_rpc(string dname);
 
     // Remote procedure call on cd
@@ -72,7 +72,7 @@ private:
 
     // Remote procedure call on append
     void append_rpc(string fname, string data);
-
+   
     // Remote procesure call on cat
     void cat_rpc(string fname);
 
@@ -83,7 +83,8 @@ private:
     void rm_rpc(string fname);
 
     // Remote procedure call on stat
-    void stat_rpc(string fname);
+    void stat_rpc(string fname); 
 };
 
 #endif
+  

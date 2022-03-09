@@ -88,7 +88,7 @@ void Shell::write_msg(const std::string &msg)
 
     while (total_write_byte < msglen)
     {
-        int byte = send(this->cs_sock, (void *)(buffer + total_write_byte), msglen - msglen, 0);
+        int byte = send(this->cs_sock, (void *)(buffer + total_write_byte), msglen - total_write_byte, 0);
 
         if (byte == -1)
         {
@@ -112,8 +112,9 @@ std::string Shell::read_msg()
     std::string status = "";
 
     // Standard response always has 4 lines of message
-    while (linecnt <= 3)
+    while (linecnt < 3)
     {
+
         int msgbreak = 0;
         byte = recv(this->cs_sock, (void *)buffer, this->BUFFER_SIZE, 0);
 
@@ -128,7 +129,10 @@ std::string Shell::read_msg()
         msg += read_string;
 
         if (linecnt == 3)
+        {
             total_read_byte += byte;
+            break;
+        }
 
         msgbreak = msg.find("\r\n");
 
@@ -143,9 +147,11 @@ std::string Shell::read_msg()
                 msglen = std::stoi(msg.substr(8, msgbreak - 8));
 
             // Skip \r\n character
+            // cout << msg;
             msg = msg.substr(msgbreak + 2);
             if (linecnt == 2)
                 total_read_byte = msg.length();
+
             linecnt++;
             msgbreak = msg.find("\r\n");
         }
@@ -160,8 +166,8 @@ std::string Shell::read_msg()
 // Remote procedure call on mkdir
 void Shell::mkdir_rpc(std::string dname)
 {
-    const std::string msg = "cd" + dname;
-    this->write_msg(dname);
+    const std::string msg = "mkdir " + dname;
+    this->write_msg(msg);
 
     std::string res = this->read_msg();
     cout << res << endl;

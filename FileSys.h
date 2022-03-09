@@ -5,6 +5,7 @@
 #define FILESYS_H
 
 #include "BasicFileSys.h"
+#include "Blocks.h"
 
 class FileSys
 {
@@ -56,7 +57,13 @@ private:
     int fs_sock; // file server socket
 
     // Additional private variables and Helper functions - if desired
+    dirblock_t curr_dir_block;
+
     short get_block_index(const char *name);
+
+    void message(std::string message);
+
+    void response(std::string status_code, std::string message, std::string data);
 };
 
 #endif

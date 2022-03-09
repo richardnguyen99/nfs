@@ -5,10 +5,12 @@
 #define FILESYS_H
 
 #include "BasicFileSys.h"
+#include "Blocks.h"
 
-class FileSys {
-  
-  public:
+class FileSys
+{
+
+public:
     // mounts the file system
     void mount(int sock);
 
@@ -20,10 +22,10 @@ class FileSys {
 
     // switch to a directory
     void cd(const char *name);
-    
+
     // switch to home directory
     void home();
-    
+
     // remove a directory
     void rmdir(const char *name);
 
@@ -48,13 +50,20 @@ class FileSys {
     // display stats about file or directory
     void stat(const char *name);
 
-  private:
-    BasicFileSys bfs;	// basic file system
-    short curr_dir;	// current directory
+private:
+    BasicFileSys bfs; // basic file system
+    short curr_dir;   // current directory
 
-    int fs_sock;  // file server socket
+    int fs_sock; // file server socket
 
     // Additional private variables and Helper functions - if desired
+    dirblock_t curr_dir_block;
+
+    short get_block_index(const char *name);
+
+    void message(std::string message);
+
+    void response(std::string status_code, std::string message, std::string data);
 };
 
-#endif 
+#endif

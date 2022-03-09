@@ -90,6 +90,29 @@ void FileSys::rmdir(const char *name)
 // list the contents of current directory
 void FileSys::ls()
 {
+    std::string content = "";
+
+    if (this->curr_dir_block.num_entries == 0)
+    {
+        this->response("200", "OK", "empty folder");
+        return;
+    }
+
+    dirblock_t tmp;
+
+    for (size_t i = 0; i < this->curr_dir_block.num_entries; i++)
+    {
+        content += this->curr_dir_block.dir_entries[i].name;
+        bfs.read_block(this->curr_dir_block.dir_entries[i].block_num, (void *)&tmp);
+
+        if (tmp.magic == DIR_MAGIC_NUM)
+            content += "/";
+
+        if (i < this->curr_dir_block.num_entries - 1)
+            content += " ";
+    }
+
+    this->response("200", "OK", content);
 }
 
 // create an empty data file

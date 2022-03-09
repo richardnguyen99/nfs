@@ -195,6 +195,11 @@ void Shell::rmdir_rpc(std::string dname)
 void Shell::ls_rpc()
 {
     // to implement
+    const std::string msg = "ls";
+    this->write_msg(msg);
+
+    std::string res = this->read_msg();
+    cout << res << endl;
 }
 
 // Remote procedure call on create

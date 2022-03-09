@@ -176,25 +176,36 @@ void Shell::mkdir_rpc(std::string dname)
 // Remote procedure call on cd
 void Shell::cd_rpc(std::string dname)
 {
-    // to implement
+    const std::string msg = "cd " + dname;
+    this->write_msg(msg);
+
+    std::string res = this->read_msg();
+    cout << res << endl;
 }
 
 // Remote procedure call on home
 void Shell::home_rpc()
 {
-    // to implement
+    const std::string msg = "home";
+    this->write_msg(msg);
+
+    std::string res = this->read_msg();
+    cout << res << endl;
 }
 
 // Remote procedure call on rmdir
 void Shell::rmdir_rpc(std::string dname)
 {
-    // to implement
+    const std::string msg = "rmdir " + dname;
+    this->write_msg(msg);
+
+    std::string res = this->read_msg();
+    cout << res << endl;
 }
 
 // Remote procedure call on ls
 void Shell::ls_rpc()
 {
-    // to implement
     const std::string msg = "ls";
     this->write_msg(msg);
 

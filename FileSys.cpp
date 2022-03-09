@@ -75,16 +75,76 @@ void FileSys::mkdir(const char *name)
 // switch to a directory
 void FileSys::cd(const char *name)
 {
+    dirblock_t new_curr_dir_block;
+    short i;
+
+    // load the index of the new directory
+    if ((i = this->get_block_index(name)) == -1)
+    {
+        this->response("503", "File does not exist", "");
+        return;
+    }
+
+    // Read the content of the new block
+    this->bfs.read_block(this->curr_dir_block.dir_entries[i].block_num, (void *)&new_curr_dir_block);
+
+    if (new_curr_dir_block.magic != DIR_MAGIC_NUM)
+    {
+        this->response("500", "File is not a directory", "");
+        return;
+    }
+
+    // Switching to the new directory block
+    this->curr_dir = this->curr_dir_block.dir_entries[i].block_num;
+    this->curr_dir_block = new_curr_dir_block;
+
+    this->response("200", "OK", "success");
 }
 
 // switch to home directory
 void FileSys::home()
 {
+    // Home directory has num of 1
+    this->curr_dir = 1;
+    this->bfs.read_block(this->curr_dir, (void *)&(this->curr_dir_block));
+
+    this->response("200", "OK", "success");
 }
 
 // remove a directory
 void FileSys::rmdir(const char *name)
 {
+    short i;
+    dirblock_t rm_block;
+
+    if ((i = this->get_block_index(name)) == -1)
+    {
+        this->response("503", "File does not exist", "");
+        return;
+    }
+
+    short rm_block_num = this->curr_dir_block.dir_entries[i].block_num;
+    this->bfs.read_block(rm_block_num, (void *)&rm_block);
+
+    if (rm_block.magic != DIR_MAGIC_NUM)
+    {
+        this->response("500", "File is not a directory", "");
+        return;
+    }
+
+    if (rm_block.num_entries > 0)
+    {
+        this->response("507", "Directory is not empty", "");
+        return;
+    }
+
+    std::swap(this->curr_dir_block.dir_entries[i], this->curr_dir_block.dir_entries[this->curr_dir_block.num_entries - 1]);
+    this->curr_dir_block.num_entries--;
+
+    this->bfs.write_block(this->curr_dir, (void *)&(this->curr_dir_block));
+    this->bfs.reclaim_block(rm_block_num);
+
+    this->response("200", "OK", "success");
 }
 
 // list the contents of current directory

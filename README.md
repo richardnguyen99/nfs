@@ -4,6 +4,8 @@ A simple Network File System
 
 Author: Minh-Hieu Nguyen [mnguyen19@seattleu.edu](mnguyen19@seattleu.edu)
 
+Port used: 10241
+
 ## My own rating
 
 Rating: A, B, C, D, or F?
@@ -133,6 +135,24 @@ Result: success
 Test case #36: ls
 Result: test/ testfile1 test1/
 
-Test case #37: quit
+Test case #37: rm testfile1
+Result: success
+
+Test case #38: ls
+Result: test/ test1/
+
+Test case #39: create testfile
+Result: success
+
+Test case #40: append testfile hello
+Result: success
+
+Test case #41: append testfile world
+Result: success
+
+Test case #42: cat testfile
+Result: helloworld
+
+Test case #43: quit
 Result: (Connection terminated at both client and server)
 ```

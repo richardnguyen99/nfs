@@ -171,13 +171,51 @@ void FileSys::ls()
         if (i < this->curr_dir_block.num_entries - 1)
             content += " ";
     }
-
     this->response("200", "OK", content);
 }
 
 // create an empty data file
 void FileSys::create(const char *name)
 {
+    inode_t new_file;
+    short new_block_num;
+
+    if (this->get_block_index(name) >= 0)
+    {
+        this->response("502", "File exists", "");
+        return;
+    }
+
+    if (strlen(name) > MAX_FNAME_SIZE)
+    {
+        this->response("504", "File name is too long", "");
+        return;
+    }
+
+    if (this->curr_dir_block.num_entries == MAX_DIR_ENTRIES)
+    {
+        this->response("506", "Directory is full", "");
+        return;
+    }
+
+    if (!(new_block_num = this->bfs.get_free_block()))
+    {
+        this->response("505", "Disk is full", "");
+        return;
+    }
+
+    new_file.size = 0;
+    new_file.magic = INODE_MAGIC_NUM;
+    bfs.write_block(new_block_num, (void *)&new_file);
+
+    strcpy(this->curr_dir_block.dir_entries[this->curr_dir_block.num_entries].name, name);
+
+    this->curr_dir_block.dir_entries[this->curr_dir_block.num_entries].block_num = new_block_num;
+    this->curr_dir_block.num_entries++;
+
+    this->bfs.write_block(this->curr_dir, (void *)&(this->curr_dir_block));
+
+    this->response("200", "OK", "success");
 }
 
 // append data to a data file
@@ -239,8 +277,12 @@ void FileSys::message(std::string message)
 
 void FileSys::response(std::string status, std::string msg, std::string data)
 {
-    this->message(status + " " + msg + "\r\n");
-    this->message("Length: " + std::to_string(data.length()) + "\r\n");
-    this->message("\r\n");
-    this->message(data);
+    const std::string status_message = status + " " + msg + "\r\n";
+    const std::string length_message = "Length:" + std::to_string(data.length()) + "\r\n";
+    const std::string brline_message = "\r\n";
+    const std::string result_message = data;
+
+    const std::string res = status_message + length_message + brline_message + result_message;
+
+    this->message(res);
 }

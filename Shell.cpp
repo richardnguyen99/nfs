@@ -105,18 +105,17 @@ std::string Shell::read_msg()
     char buffer[this->BUFFER_SIZE];
     int linecnt = 0;
     int total_read_byte = 0;
-    int byte = 0;
-    int msglen = 0;
+    int msglen = INT32_MAX; // Don't know msglen before hand
     std::string msg;
     std::string read_string = "";
     std::string status = "";
 
     // Standard response always has 4 lines of message
-    while (linecnt < 3)
+    while (total_read_byte < msglen)
     {
 
         int msgbreak = 0;
-        byte = recv(this->cs_sock, (void *)buffer, this->BUFFER_SIZE, 0);
+        int byte = recv(this->cs_sock, (void *)buffer, this->BUFFER_SIZE, 0);
 
         if (byte == -1)
         {
@@ -131,7 +130,6 @@ std::string Shell::read_msg()
         if (linecnt == 3)
         {
             total_read_byte += byte;
-            break;
         }
 
         msgbreak = msg.find("\r\n");
@@ -142,9 +140,12 @@ std::string Shell::read_msg()
             if (linecnt == 0)
                 status = msg.substr(0, msgbreak);
             if (linecnt == 1)
+            {
                 // Unsure how many place there is in the length message
-                // But it can be identified between end of message and \r\n
-                msglen = std::stoi(msg.substr(8, msgbreak - 8));
+                // But it can be identified between end of "Length:" and
+                // beginning of  "\r\n"
+                msglen = std::stoi(msg.substr(7, msgbreak - 7));
+            }
 
             // Skip \r\n character
             // cout << msg;
@@ -216,7 +217,11 @@ void Shell::ls_rpc()
 // Remote procedure call on create
 void Shell::create_rpc(std::string fname)
 {
-    // to implement
+    const std::string msg = "create " + fname;
+    this->write_msg(msg);
+
+    std::string res = this->read_msg();
+    cout << res << endl;
 }
 
 // Remote procedure call on append

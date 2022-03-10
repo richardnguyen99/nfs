@@ -247,19 +247,31 @@ void Shell::cat_rpc(std::string fname)
 // Remote procedure call on head
 void Shell::head_rpc(std::string fname, int n)
 {
-    // to implement
+    const std::string msg = "head " + fname + " " + std::to_string(n);
+    this->write_msg(msg);
+
+    std::string res = this->read_msg();
+    cout << res << endl;
 }
 
 // Remote procedure call on rm
 void Shell::rm_rpc(std::string fname)
 {
-    // to implement
+    const std::string msg = "rm " + fname;
+    this->write_msg(msg);
+
+    std::string res = this->read_msg();
+    cout << res << endl;
 }
 
 // Remote procedure call on stat
 void Shell::stat_rpc(std::string fname)
 {
-    // to implement
+    const std::string msg = "stat " + fname;
+    this->write_msg(msg);
+
+    std::string res = this->read_msg();
+    cout << res << endl;
 }
 
 // Executes the shell until the user quits.

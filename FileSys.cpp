@@ -2,6 +2,7 @@
 // Implements the file system commands that are available to the shell.
 
 #include <cstring>
+#include <sstream>
 #include <iostream>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -332,16 +333,112 @@ void FileSys::cat(const char *name)
 // display the first N bytes of the file
 void FileSys::head(const char *name, unsigned int n)
 {
+    short inode_num;
+    inode_t inode_block;
+    datablock_t curr_block;
+
+    size_t index = 0;
+    size_t offset = 0;
+    size_t block_num = 0;
+
+    if ((inode_num = this->get_block_index(name)) == -1)
+    {
+        this->response("503", "File does not exist", "");
+        return;
+    }
+
+    this->bfs.read_block(this->curr_dir_block.dir_entries[inode_num].block_num, (void *)&inode_block);
+
+    if (inode_block.magic != INODE_MAGIC_NUM)
+    {
+        this->response("501", "File is a directory", "");
+        return;
+    }
+
+    n = (n > inode_block.size) ? inode_block.size : n;
+    char block_buffer[n + 1];
+
+    for (int i = 0; i < n; i++)
+    {
+        if (offset == 0)
+            this->bfs.read_block(inode_block.blocks[block_num++], (void *)&curr_block);
+
+        block_buffer[index++] = curr_block.data[offset++];
+        offset = offset % BLOCK_SIZE;
+    }
+
+    block_buffer[index] = '\0';
+    this->response("200", "OK", std::string(block_buffer));
 }
 
 // delete a data file
 void FileSys::rm(const char *name)
 {
+    short inode_num;
+    short block_num;
+    short inode_block_num;
+    inode_t inode_block;
+
+    if ((inode_num = this->get_block_index(name)) == -1)
+    {
+        this->response("503", "File does not exist", "");
+        return;
+    }
+
+    inode_block_num = this->curr_dir_block.dir_entries[inode_num].block_num;
+    this->bfs.read_block(inode_block_num, (void *)&inode_block);
+
+    if (inode_block.magic != INODE_MAGIC_NUM)
+    {
+        this->response("501", "File is a directory", "");
+        return;
+    }
+
+    std::swap(this->curr_dir_block.dir_entries[inode_num], this->curr_dir_block.dir_entries[this->curr_dir_block.num_entries - 1]);
+    this->curr_dir_block.num_entries--;
+    this->bfs.write_block(this->curr_dir, (void *)&(this->curr_dir_block));
+    block_num = (inode_block.size == 0) ? 0 : (inode_block.size - 1) / BLOCK_SIZE + 1;
+
+    for (size_t i = 0; i < block_num; i++)
+        this->bfs.reclaim_block(inode_block.blocks[i]);
+
+    this->bfs.reclaim_block(inode_block_num);
+    this->response("200", "OK", "success");
 }
 
 // display stats about file or directory
 void FileSys::stat(const char *name)
 {
+    dirblock_t curr_dir;
+    inode_t inode_block;
+    short inode_num;
+
+    std::stringstream message;
+
+    if ((inode_num = this->get_block_index(name)) == -1)
+    {
+        this->response("503", "File does not exist", "");
+        return;
+    }
+
+    this->bfs.read_block(this->curr_dir_block.dir_entries[inode_num].block_num, (void *)&curr_dir);
+    if (curr_dir.magic == DIR_MAGIC_NUM)
+    {
+        message << "Directory name: " << name
+                << "\n";
+        message << "Directory block: " << this->curr_dir_block.dir_entries[inode_num].block_num;
+    }
+    else
+    {
+        this->bfs.read_block(this->curr_dir_block.dir_entries[inode_num].block_num, (void *)&inode_block);
+        message << "Inode block: " << this->curr_dir_block.dir_entries[inode_num].block_num << "\n";
+        message << "Bytes in file:" << inode_block.size << "\n";
+
+        message << "Number of blocks: " << (inode_block.size == 0 ? 1 : (inode_block.size - 1) / BLOCK_SIZE + 2) << "\n";
+        message << "First block: " << (inode_block.size == 0 ? 0 : inode_block.blocks[0]);
+    }
+
+    this->response("200", "OK", message.str());
 }
 
 // HELPER FUNCTIONS (optional)

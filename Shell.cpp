@@ -227,13 +227,21 @@ void Shell::create_rpc(std::string fname)
 // Remote procedure call on append
 void Shell::append_rpc(std::string fname, std::string data)
 {
-    // to implement
+    const std::string msg = "append " + fname + " " + data;
+    this->write_msg(msg);
+
+    std::string res = this->read_msg();
+    cout << res << endl;
 }
 
 // Remote procesure call on cat
 void Shell::cat_rpc(std::string fname)
 {
-    // to implement
+    const std::string msg = "cat " + fname;
+    this->write_msg(msg);
+
+    std::string res = this->read_msg();
+    cout << res << endl;
 }
 
 // Remote procedure call on head

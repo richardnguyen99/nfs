@@ -221,11 +221,112 @@ void FileSys::create(const char *name)
 // append data to a data file
 void FileSys::append(const char *name, const char *data)
 {
+    short inode_num;
+    inode_t inode_block;
+    int index;
+    int offset;
+
+    datablock_t curr_block;
+
+    if ((inode_num = this->get_block_index(name)) == -1)
+    {
+        this->response("503", "File does not exist", "");
+        return;
+    }
+
+    this->bfs.read_block(this->curr_dir_block.dir_entries[inode_num].block_num, (void *)&inode_block);
+    if (inode_block.magic != INODE_MAGIC_NUM)
+    {
+        this->response("501", "File is a directory", "");
+        return;
+    }
+
+    if (inode_block.size == MAX_FILE_SIZE)
+    {
+        this->response("508", "Append exceeds maximum file size", "");
+        return;
+    }
+
+    index = inode_block.size / BLOCK_SIZE;
+    offset = inode_block.size % BLOCK_SIZE;
+
+    if (offset == 0)
+        inode_block.blocks[index] = this->bfs.get_free_block();
+
+    this->bfs.read_block(inode_block.blocks[index], (void *)&(curr_block));
+    int i = 0;
+
+    while (data[i] != '\0')
+    {
+        if (offset == BLOCK_SIZE)
+        {
+            offset = 0;
+            this->bfs.write_block(inode_block.blocks[index++], (void *)&curr_block);
+
+            if (index == MAX_DATA_BLOCKS)
+            {
+                inode_block.size = index * BLOCK_SIZE;
+                this->bfs.write_block(this->curr_dir_block.dir_entries[inode_num].block_num, (void *)&inode_block);
+                this->response("508", "Append exceeds maximum file size", "");
+                return;
+            }
+
+            if ((inode_block.blocks[index] = this->bfs.get_free_block()) == 0)
+            {
+                inode_block.size = index * BLOCK_SIZE;
+                this->bfs.write_block(this->curr_dir_block.dir_entries[inode_num].block_num, (void *)&inode_block);
+                this->response("505", "Disk is full", "");
+                return;
+            }
+
+            curr_block = datablock_t();
+        }
+        curr_block.data[offset++] = data[i++];
+    }
+
+    this->bfs.write_block(inode_block.blocks[index], (void *)&curr_block);
+    inode_block.size = index * BLOCK_SIZE + offset;
+    this->bfs.write_block(this->curr_dir_block.dir_entries[inode_num].block_num, (void *)&inode_block);
+
+    this->response("200", "OK", "success");
 }
 
 // display the contents of a data file
 void FileSys::cat(const char *name)
 {
+    short inode_num;
+    inode_t inode_block;
+    datablock_t curr_block;
+
+    size_t index = 0;
+    size_t offset = 0;
+    size_t block_num = 0;
+
+    if ((inode_num = this->get_block_index(name)) == -1)
+    {
+        this->response("503", "File does not exist", "");
+        return;
+    }
+
+    this->bfs.read_block(this->curr_dir_block.dir_entries[inode_num].block_num, (void *)&inode_block);
+    if (inode_block.magic != INODE_MAGIC_NUM)
+    {
+        this->response("501", "File is a directory", "");
+        return;
+    }
+
+    char block_buffer[inode_block.size + 1];
+    for (int i = 0; i < inode_block.size; i++)
+    {
+        if (offset == 0)
+            this->bfs.read_block(inode_block.blocks[block_num++], (void *)&curr_block);
+
+        block_buffer[index++] = curr_block.data[offset++];
+        offset = offset % BLOCK_SIZE;
+    }
+
+    block_buffer[index] = '\0';
+    this->response("200", "OK", std::string(block_buffer));
 }
 
 // display the first N bytes of the file

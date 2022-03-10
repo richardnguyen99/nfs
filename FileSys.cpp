@@ -424,7 +424,7 @@ void FileSys::stat(const char *name)
     this->bfs.read_block(this->curr_dir_block.dir_entries[inode_num].block_num, (void *)&curr_dir);
     if (curr_dir.magic == DIR_MAGIC_NUM)
     {
-        message << "Directory name: " << name
+        message << "Directory name: " << name << "/"
                 << "\n";
         message << "Directory block: " << this->curr_dir_block.dir_entries[inode_num].block_num;
     }
